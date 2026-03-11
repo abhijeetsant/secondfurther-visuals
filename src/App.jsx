@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 // ── Cold Press palette — guide v1.0 ──────────────────────────────
 const C = {
@@ -55,7 +55,7 @@ const KayReceipt = () => {
   );
 
   // ── Line item ─────────────────────────────────────────────────
-  const Item = ({ category, label, value, valColor = C.ink, valSize = 22, note }) => (
+  const Item = ({ category, label, value, valColor = C.dark, valSize = 22, note }) => (
     <div style={{ marginBottom: 16 }}>
       {category && (
         <div style={{
@@ -133,7 +133,7 @@ const KayReceipt = () => {
               SECONDFURTHER · PLATFORM AUDIT
             </div>
             <div style={{
-              fontSize: 34, fontWeight: 900, color: C.ink,
+              fontSize: 34, fontWeight: 900, color: C.dark,
               letterSpacing: 3, textTransform: "uppercase",
               fontFamily: "'Arial Black', Impact, sans-serif",
               lineHeight: 1, marginBottom: 8,
@@ -179,7 +179,7 @@ const KayReceipt = () => {
             background: "rgba(212,168,83,0.05)",
           }}>
             <div>
-              <div style={{ fontSize: 10, fontWeight: 900, color: C.ink, letterSpacing: 2, textTransform: "uppercase", fontFamily: "sans-serif", marginBottom: 4 }}>
+              <div style={{ fontSize: 10, fontWeight: 900, color: C.dark, letterSpacing: 2, textTransform: "uppercase", fontFamily: "sans-serif", marginBottom: 4 }}>
                 Outcome Rate
               </div>
               <div style={{ fontSize: 10, color: C.muted, fontStyle: "italic", fontFamily: "sans-serif" }}>
@@ -1864,16 +1864,6 @@ const SmallMultiples = () => {
 // ══════════════════════════════════════════════════════════════════
 export default function App() {
   const [active, setActive] = useState(0);
-    useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const tabParam = params.get('tab');
-    if (tabParam) {
-      const idx = allTabs.findIndex(t =>
-        t.label.toLowerCase().replace(/\s+/g, '-') === tabParam
-      );
-      if (idx >= 0) setActive(idx);
-    }
-  }, []);
   const [group, setGroup]   = useState(0);
 
   const groups = [
