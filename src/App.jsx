@@ -1,5 +1,17 @@
 import { useState } from "react";
 
+// Add this inside the App() function, after useState declarations:
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const tabParam = params.get('tab');
+  if (tabParam) {
+    const idx = allTabs.findIndex(t => 
+      t.label.toLowerCase().replace(/\s+/g,'-') === tabParam
+    );
+    if (idx >= 0) setActive(idx);
+  }
+}, []);
+
 // ── Cold Press palette — guide v1.0 ──────────────────────────────
 const C = {
   bg:      "#F5F2EC",  // Parchment
