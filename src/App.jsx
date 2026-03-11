@@ -1,17 +1,5 @@
 import { useState } from "react";
 
-// Add this inside the App() function, after useState declarations:
-useEffect(() => {
-  const params = new URLSearchParams(window.location.search);
-  const tabParam = params.get('tab');
-  if (tabParam) {
-    const idx = allTabs.findIndex(t => 
-      t.label.toLowerCase().replace(/\s+/g,'-') === tabParam
-    );
-    if (idx >= 0) setActive(idx);
-  }
-}, []);
-
 // ── Cold Press palette — guide v1.0 ──────────────────────────────
 const C = {
   bg:      "#F5F2EC",  // Parchment
@@ -317,78 +305,85 @@ const Scorecard = () => {
 
 
 // ══════════════════════════════════════════════════════════════════
-//  SPIDER CHART — Full-width clean radar, matching Image 6 reference
-//  Labels + scores outside axes · large open polygon · light grid
+//  SPIDER CHART — Score pills AT data points · two-color polygon
+//  Recruiter zone (dark) vs Seeker zone (amber) · Image 6 fidelity
 // ══════════════════════════════════════════════════════════════════
 const SpiderChart = () => {
   const [hovAxis, setHovAxis] = useState(null);
 
-  // Large centered radar — fills the 900px card
   const W = 820, H = 520;
-  const cX = 410, cY = 270, R = 195;
+  const cX = 410, cY = 275, R = 188;
 
+  // Order: 0=top, clockwise. Dims 0,1,5 = recruiter-serving. Dims 2,3,4 = job-seeker.
   const dims = [
-    { label: "Search & Filtering",       score: 62 },
-    { label: "Application Process",      score: 55 },
-    { label: "Applicant Transparency",   score: 12 },
-    { label: "Trust Signals",            score:  8 },
-    { label: "Hiring Intent Visibility", score:  5 },
-    { label: "Premium Value Delivery",   score: 30 },
+    { label: "Search & Filtering",       score: 62, recruiter: true  },
+    { label: "Application Process",      score: 55, recruiter: true  },
+    { label: "Applicant Transparency",   score: 12, recruiter: false },
+    { label: "Trust Signals",            score:  8, recruiter: false },
+    { label: "Hiring Intent Visibility", score:  5, recruiter: false },
+    { label: "Premium Value Delivery",   score: 30, recruiter: true  },
   ];
   const N = dims.length;
 
-  // Angle: 0 = top (−90°), going clockwise
-  const ang  = (i) => (i * (360 / N) - 90) * Math.PI / 180;
-  const pt   = (i, frac) => ({
+  const ang = (i) => (i * (360 / N) - 90) * Math.PI / 180;
+  const pt  = (i, frac) => ({
     x: cX + R * frac * Math.cos(ang(i)),
     y: cY + R * frac * Math.sin(ang(i)),
   });
-  const poly = (fracs) =>
-    fracs.map((f, i) => {
-      const p = pt(i, f);
-      return `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`;
-    }).join(" ") + "Z";
 
-  // Grid rings at 25 / 50 / 75 / 100
+  // Grid rings
   const rings = [0.25, 0.5, 0.75, 1.0];
 
-  // Label anchor position — push further out from axis end
-  const LABEL_PUSH = 42;
+  // Two-color polygon paths — split at boundary between dim 1↔2 and dim 4↔5
+  // Recruiter zone: center → pt5 → pt0 → pt1 → center
+  // Seeker zone:    center → pt1 → pt2 → pt3 → pt4 → pt5 → center
+  const pth = (indices) =>
+    `M${cX},${cY} ` +
+    indices.map(i => { const p = pt(i, dims[i].score / 100); return `L${p.x.toFixed(1)},${p.y.toFixed(1)}`; }).join(" ") +
+    " Z";
+
+  const recruiterPath = pth([5, 0, 1]);
+  const seekerPath    = pth([1, 2, 3, 4, 5]);
+
+  // Label anchor logic
+  const LABEL_OUT = 46;
   const labelPt = (i) => ({
-    x: cX + (R + LABEL_PUSH) * Math.cos(ang(i)),
-    y: cY + (R + LABEL_PUSH) * Math.sin(ang(i)),
+    x: cX + (R + LABEL_OUT) * Math.cos(ang(i)),
+    y: cY + (R + LABEL_OUT) * Math.sin(ang(i)),
   });
 
-  // Score color: high = dark ink, mid = amber, low = amber-muted
-  const sc = (v) => v >= 45 ? C.dark : v >= 20 ? C.amber : C.amberDim;
-
-  const liPath = poly(dims.map(d => d.score / 100));
-
   return (
-    <div style={{ background: C.bg, padding: "44px 48px 32px", fontFamily: "'Georgia', serif", width: 900 }}>
+    <div style={{ background: C.bg, padding: "44px 48px 28px", fontFamily: "'Georgia', serif", width: 900 }}>
       {/* Header */}
       <div style={{ fontSize:10, fontWeight:700, letterSpacing:3, color:C.amber, marginBottom:8, textTransform:"uppercase", fontFamily:"sans-serif" }}>Product Teardown · LinkedIn Jobs</div>
       <div style={{ fontSize:26, fontWeight:800, color:C.dark, lineHeight:1.15 }}>Platform Health Scorecard</div>
-      <div style={{ fontSize:13.5, color:C.grey, marginTop:6, marginBottom:8, fontStyle:"italic" }}>
+      <div style={{ fontSize:13.5, color:C.grey, marginTop:6, marginBottom:10, fontStyle:"italic" }}>
         Six dimensions. One product decision. The shape of what LinkedIn chose to build — and what it didn't.
       </div>
 
-      {/* Legend row */}
-      <div style={{ display:"flex", gap:28, marginBottom:18, alignItems:"center" }}>
+      {/* Legend */}
+      <div style={{ display:"flex", gap:28, marginBottom:14, alignItems:"center" }}>
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-          <svg width={28} height={10}><line x1={0} y1={5} x2={28} y2={5} stroke={`${C.dark}40`} strokeWidth={1.5} strokeDasharray="4,3"/></svg>
+          <svg width={28} height={10}><line x1={0} y1={5} x2={28} y2={5} stroke={`${C.dark}38`} strokeWidth={1.5} strokeDasharray="4,3"/></svg>
           <span style={{ fontSize:11, color:C.grey, fontFamily:"sans-serif" }}>Ideal (100)</span>
         </div>
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-          <svg width={28} height={10}><line x1={0} y1={5} x2={28} y2={5} stroke={C.dark} strokeWidth={2.5}/></svg>
-          <span style={{ fontSize:11, color:C.dark, fontFamily:"sans-serif", fontWeight:600 }}>LinkedIn Jobs</span>
+          <svg width={24} height={14}>
+            <rect x={1} y={1} width={22} height={12} rx={2} fill={`${C.dark}18`} stroke={C.dark} strokeWidth={1.5}/>
+          </svg>
+          <span style={{ fontSize:11, color:C.dark, fontFamily:"sans-serif", fontWeight:600 }}>Recruiter-serving dimensions</span>
+        </div>
+        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+          <svg width={24} height={14}>
+            <rect x={1} y={1} width={22} height={12} rx={2} fill={`${C.amber}18`} stroke={C.amber} strokeWidth={1.5}/>
+          </svg>
+          <span style={{ fontSize:11, color:C.amberDim, fontFamily:"sans-serif", fontWeight:600 }}>Job-seeker dimensions</span>
         </div>
       </div>
 
-      {/* Full-width SVG */}
       <svg width={W} height={H} style={{ display:"block", overflow:"visible" }}>
 
-        {/* Grid rings */}
+        {/* Grid rings — hexagonal polygons */}
         {rings.map((frac, ri) => (
           <g key={ri}>
             <polygon
@@ -396,12 +391,12 @@ const SpiderChart = () => {
               fill="none"
               stroke={frac === 1.0 ? `${C.amber}44` : C.rule}
               strokeWidth={frac === 1.0 ? 1.5 : 0.8}
-              strokeDasharray={frac < 1 ? "3,4" : undefined}
+              strokeDasharray={frac < 1.0 ? "3,4" : undefined}
             />
-            {/* Ring value label — placed on vertical axis (i=0, top) */}
+            {/* Ring value — left of vertical axis */}
             <text
-              x={cX} y={cY - R * frac + (frac === 1.0 ? -6 : -4)}
-              textAnchor="middle" fontSize={9} fill={C.muted} fontFamily="sans-serif"
+              x={cX - 6} y={cY - R * frac + 3}
+              textAnchor="end" fontSize={9} fill={C.muted} fontFamily="sans-serif"
             >{Math.round(frac * 100)}</text>
           </g>
         ))}
@@ -414,33 +409,52 @@ const SpiderChart = () => {
             <line key={i}
               x1={cX} y1={cY} x2={end.x} y2={end.y}
               stroke={isH ? C.amber : C.rule}
-              strokeWidth={isH ? 1.5 : 1}
+              strokeWidth={isH ? 1.5 : 0.9}
             />
           );
         })}
 
-        {/* Ideal outline — light dashed */}
+        {/* Outer ideal polygon — ghost dashed */}
         <polygon
           points={dims.map((_, i) => { const p = pt(i, 1); return `${p.x},${p.y}`; }).join(" ")}
-          fill={`${C.dark}05`} stroke={`${C.dark}30`} strokeWidth={1.5} strokeDasharray="5,4"
+          fill={`${C.dark}04`}
+          stroke={`${C.dark}28`}
+          strokeWidth={1.5}
+          strokeDasharray="5,4"
         />
 
-        {/* LinkedIn polygon — solid dark fill */}
-        <path d={liPath} fill={`${C.dark}14`} stroke={C.dark} strokeWidth={2.5} strokeLinejoin="round" />
+        {/* TWO-COLOR DATA POLYGON */}
+        {/* Recruiter zone — ink tint fill, solid ink stroke */}
+        <path d={recruiterPath}
+          fill={`${C.dark}18`}
+          stroke={C.dark}
+          strokeWidth={2.5}
+          strokeLinejoin="round"
+        />
+        {/* Seeker zone — amber tint fill, amber stroke */}
+        <path d={seekerPath}
+          fill={`${C.amber}18`}
+          stroke={C.amber}
+          strokeWidth={2.5}
+          strokeLinejoin="round"
+        />
 
-        {/* Axis labels + score numbers — outside each axis end */}
+        {/* Axis labels + score pill badges AT DATA POINTS */}
         {dims.map((d, i) => {
-          const lp  = labelPt(i);
-          const isH = hovAxis === i;
-          const a   = ang(i);
-          const cos = Math.cos(a);
-          // Anchor: right-of-axis = start, left = end, top/bottom = middle
-          const anchor = cos > 0.2 ? "start" : cos < -0.2 ? "end" : "middle";
-          // Vertical align: if bottom half push down a bit
-          const sin = Math.sin(a);
-          const yOff = sin > 0.3 ? 6 : sin < -0.3 ? -6 : 0;
-          const scoreVal = d.score;
-          const colour = sc(scoreVal);
+          const dataPt  = pt(i, d.score / 100);
+          const lp      = labelPt(i);
+          const isH     = hovAxis === i;
+          const a       = ang(i);
+          const cos     = Math.cos(a);
+          const sin     = Math.sin(a);
+          const anchor  = cos > 0.2 ? "start" : cos < -0.2 ? "end" : "middle";
+          const colour  = d.recruiter ? C.dark : C.amberDim;
+
+          // Pill badge dimensions
+          const PW = 36, PH = 22, PR = 11;
+          // Offset pill slightly above/away from the data point to not cover the polygon edge
+          const pillOffX = cos > 0.2 ? 22 : cos < -0.2 ? -22 : 0;
+          const pillOffY = sin > 0.2 ? 18 : sin < -0.2 ? -18 : (i === 0 ? -18 : 18);
 
           return (
             <g key={i}
@@ -448,47 +462,47 @@ const SpiderChart = () => {
               onMouseLeave={() => setHovAxis(null)}
               style={{ cursor:"pointer" }}>
 
-              {/* Score number — large, right at axis end */}
-              <text
-                x={pt(i,1).x + (cos > 0.2 ? 8 : cos < -0.2 ? -8 : 0)}
-                y={pt(i,1).y + (sin > 0.2 ? 8 : sin < -0.2 ? -8 : 0) + yOff}
-                textAnchor={anchor}
-                dominantBaseline="middle"
-                fontSize={isH ? 17 : 15}
-                fontWeight={900}
-                fill={colour}
-                fontFamily="sans-serif"
-                style={{ transition:"all 0.15s" }}
-              >{scoreVal}</text>
-
-              {/* Label text — further out */}
+              {/* Axis label — dimension name, outside */}
               <text
                 x={lp.x}
-                y={lp.y + yOff}
+                y={lp.y}
                 textAnchor={anchor}
                 dominantBaseline="middle"
-                fontSize={isH ? 12 : 11}
+                fontSize={isH ? 12.5 : 11.5}
                 fontWeight={isH ? 700 : 500}
-                fill={isH ? C.dark : "#5A5250"}
+                fill={isH ? colour : "#5A5250"}
                 fontFamily="sans-serif"
                 style={{ transition:"all 0.15s" }}
               >{d.label}</text>
 
-              {/* Dot at axis tip */}
-              <circle
-                cx={pt(i,1).x} cy={pt(i,1).y}
-                r={isH ? 4.5 : 3}
-                fill={isH ? C.amber : C.muted}
+              {/* Score pill badge — AT the actual data point */}
+              <rect
+                x={dataPt.x + pillOffX - PW/2}
+                y={dataPt.y + pillOffY - PH/2}
+                width={PW} height={PH} rx={PR}
+                fill={C.bg}
+                stroke={colour}
+                strokeWidth={isH ? 2 : 1.5}
                 style={{ transition:"all 0.15s" }}
               />
-
-              {/* Score dot on polygon */}
-              <circle
-                cx={pt(i, d.score/100).x}
-                cy={pt(i, d.score/100).y}
-                r={isH ? 7 : 4.5}
+              <text
+                x={dataPt.x + pillOffX}
+                y={dataPt.y + pillOffY}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fontSize={isH ? 13.5 : 12}
+                fontWeight={900}
                 fill={colour}
-                stroke={C.white}
+                fontFamily="sans-serif"
+                style={{ transition:"all 0.15s" }}
+              >{d.score}</text>
+
+              {/* Dot at actual data point */}
+              <circle
+                cx={dataPt.x} cy={dataPt.y}
+                r={isH ? 5.5 : 3.5}
+                fill={C.white}
+                stroke={colour}
                 strokeWidth={isH ? 2 : 1.5}
                 style={{ transition:"all 0.15s" }}
               />
@@ -706,7 +720,7 @@ const NetworkGraph = () => {
               onMouseLeave={() => setHov(null)}
               style={{ cursor:"pointer" }}>
               <circle cx={n.x} cy={n.y} r={h ? NR+3 : NR}
-                fill={`${C.amber}10`}
+                fill={`${C.amber}44`}
                 stroke={C.amber} strokeWidth={h ? 2 : 1.5}
                 strokeDasharray="5,3"
                 style={{ transition:"all 0.15s" }}/>
@@ -739,7 +753,7 @@ const NetworkGraph = () => {
           <text x={30} y={12} fontSize={10.5} fill={C.grey} fontFamily="sans-serif">Built — connected to ranking</text>
 
           <line x1={0} y1={30} x2={24} y2={30} stroke={`${C.amber}88`} strokeWidth={1.5} strokeDasharray="5,3"/>
-          <circle cx={12} cy={30} r={6} fill={`${C.amber}10`} stroke={C.amber} strokeWidth={1.5} strokeDasharray="4,2"/>
+          <circle cx={12} cy={30} r={6} fill={`${C.amber}44`} stroke={C.amber} strokeWidth={1.5} strokeDasharray="4,2"/>
           <text x={30} y={34} fontSize={10.5} fill={C.grey} fontFamily="sans-serif">Unbuilt — severed, no signal</text>
 
           <circle cx={12} cy={52} r={8} fill="url(#hubG)"/>
@@ -772,14 +786,19 @@ const BubbleChart = () => {
   const yS=v=>PAD.t+iH-((v-4)/22)*iH;
   const rS=v=>10+((v-5.3)/8.5)*44;
 
-  // Color per year: early years warm-grey, recent years shift to red — tells the decay story
-  const yearColor = (i) => {
-    const t = i / 6; // 0=2019 (neutral), 1=2025 (red)
-    const r = Math.round(120 + t * 72);
-    const g = Math.round(100 - t * 65);
-    const b = Math.round(90  - t * 55);
-    return `rgb(${r},${g},${b})`;
-  };
+  // Color per year: light parchment-ink → full ink
+  // Tells the decay story through darkness — no off-palette colors needed
+  // 2019 = lightest (things were better), 2025 = darkest (now)
+  const YEAR_COLORS = [
+    "#C8C0B4",  // 2019 — lightest, warm grey
+    "#B0A89C",  // 2020
+    "#978F84",  // 2021
+    "#7A7268",  // 2022
+    "#57504A",  // 2023
+    "#312B27",  // 2024
+    "#0D0D0D",  // 2025 — full ink
+  ];
+  const yearColor = (i) => YEAR_COLORS[i] || C.dark;
 
   return (
     <div style={{background:C.bg, padding:"36px 40px 28px", fontFamily:"'Georgia',serif", width:W+80}}>
@@ -800,12 +819,7 @@ const BubbleChart = () => {
 
       <svg width={W} height={H} style={{overflow:"visible"}}>
         <defs>
-          {years.map((yr, i) => (
-            <radialGradient key={yr} id={`bub${i}`} cx="38%" cy="32%">
-              <stop offset="0%" stopColor={yearColor(i)} stopOpacity="0.7"/>
-              <stop offset="100%" stopColor={yearColor(i)} stopOpacity="0.18"/>
-            </radialGradient>
-          ))}
+          {/* No gradients — solid fills throughout */}
         </defs>
 
         {/* Grid */}
@@ -837,13 +851,14 @@ const BubbleChart = () => {
           return(
             <g key={yr} onMouseEnter={()=>setHov(i)} onMouseLeave={()=>setHov(null)} style={{cursor:"pointer"}}>
               <circle cx={cx} cy={cy} r={h?r+3:r}
-                fill={`url(#bub${i})`}
-                stroke={yearColor(i)}
+                fill={yearColor(i)}
+                stroke={C.bg}
                 strokeWidth={h?2.5:1.5}
+                opacity={0.88}
                 style={{transition:"all 0.2s"}}/>
-              {/* Year label outside bubble */}
+              {/* Year label outside bubble — white text on dark bubbles, dark on light */}
               <text x={cx} y={cy+r+15} textAnchor="middle" fontSize={10} fontWeight={700}
-                fill={i>=5?C.amberDim:C.dark} fontFamily="sans-serif" style={{pointerEvents:"none"}}>{yr}</text>
+                fill={i >= 4 ? C.dark : C.muted} fontFamily="sans-serif" style={{pointerEvents:"none"}}>{yr}</text>
               {/* Hover card */}
               {h&&(
                 <g>
@@ -869,16 +884,16 @@ const BubbleChart = () => {
           "clicked apply" replaces "applicants"
         </text>
 
-        {/* Color legend */}
+        {/* Color legend — show full 7-step scale */}
         <g transform={`translate(${PAD.l}, ${PAD.t-32})`}>
-          {[{i:0,yr:"2019"},{i:6,yr:"2025"}].map(({i,yr})=>(
-            <g key={yr} transform={`translate(${i===0?0:100}, 0)`}>
-              <circle cx={7} cy={7} r={7} fill={yearColor(i)} fillOpacity={0.5} stroke={yearColor(i)} strokeWidth={1.5}/>
+          {years.map((yr, i) => (
+            <g key={yr} transform={`translate(${i * 72}, 0)`}>
+              <circle cx={7} cy={7} r={7} fill={yearColor(i)} opacity={0.88}/>
               <text x={18} y={11} fontSize={10} fill={C.grey} fontFamily="sans-serif">{yr}</text>
             </g>
           ))}
-          <text x={220} y={11} fontSize={10} fill={C.muted} fontFamily="sans-serif" fontStyle="italic">
-            Colour shift 2019→2025 reflects outcome degradation
+          <text x={years.length * 72 + 8} y={11} fontSize={9.5} fill={C.muted} fontFamily="sans-serif" fontStyle="italic">
+            Darker = worse outcomes
           </text>
         </g>
       </svg>
@@ -1226,7 +1241,7 @@ const DecisionMatrix = () => {
             return(
               <g key={i} onMouseEnter={()=>setHov(`m${i}`)} onMouseLeave={()=>setHov(null)} style={{cursor:"pointer"}}>
                 <circle cx={f.x} cy={f.y} r={h?r+4:r}
-                  fill="rgba(122,96,48,0.12)" stroke={C.amberDim} strokeWidth={h?2:1.5} strokeDasharray="4,2"
+                  fill={`${C.amber}44`} stroke={C.amberDim} strokeWidth={h?2:1.5} strokeDasharray="4,2"
                   style={{transition:"all 0.18s"}}/>
                 <text x={f.x} y={f.y+4} textAnchor="middle" fontSize={9} fill={`${C.amberDim}88`} fontFamily="sans-serif">?</text>
                 <text x={f.x} y={labelY} textAnchor={f.la||"middle"} fontSize={9.5} fill={C.amberDim} fontFamily="sans-serif" fontWeight={h?700:400}>{f.label}</text>
@@ -1247,7 +1262,7 @@ const DecisionMatrix = () => {
             return(
               <g key={i} onMouseEnter={()=>setHov(`e${i}`)} onMouseLeave={()=>setHov(null)} style={{cursor:"pointer"}}>
                 <circle cx={f.x} cy={f.y} r={h?r+4:r}
-                  fill="rgba(13,13,13,0.18)" stroke={C.dark} strokeWidth={h?2:1.5}
+                  fill={`${C.dark}CC`} stroke={C.dark} strokeWidth={h?2:1.5}
                   style={{transition:"all 0.18s"}}/>
                 <text x={labelX} y={f.y + (f.la==="middle" ? r+14 : 4)}
                   textAnchor={anchor} fontSize={9.5} fill={C.dark} fontFamily="sans-serif" fontWeight={h?700:400}>{f.label}</text>
@@ -1266,14 +1281,14 @@ const DecisionMatrix = () => {
           {/* Type legend */}
           <div style={{ marginBottom:22 }}>
             <div style={{ display:"flex",alignItems:"center",gap:9,marginBottom:8 }}>
-              <svg width={20} height={20}><circle cx={10} cy={10} r={8} fill="rgba(13,13,13,0.18)" stroke={C.dark} strokeWidth={1.5}/></svg>
+              <svg width={20} height={20}><circle cx={10} cy={10} r={8} fill={`${C.dark}CC`} stroke={C.dark} strokeWidth={1.5}/></svg>
               <div>
                 <div style={{fontSize:11.5,fontWeight:700,color:C.dark,fontFamily:"sans-serif"}}>Exists in LinkedIn</div>
                 <div style={{fontSize:9.5,color:C.grey,fontFamily:"sans-serif"}}>Size = platform investment</div>
               </div>
             </div>
             <div style={{ display:"flex",alignItems:"center",gap:9 }}>
-              <svg width={20} height={20}><circle cx={10} cy={10} r={8} fill="rgba(122,96,48,0.12)" stroke={C.amberDim} strokeWidth={1.5} strokeDasharray="3,2"/></svg>
+              <svg width={20} height={20}><circle cx={10} cy={10} r={8} fill={`${C.amber}44`} stroke={C.amberDim} strokeWidth={1.5} strokeDasharray="3,2"/></svg>
               <div>
                 <div style={{fontSize:11.5,fontWeight:700,color:C.amberDim,fontFamily:"sans-serif"}}>Doesn't exist</div>
                 <div style={{fontSize:9.5,color:C.grey,fontFamily:"sans-serif"}}>Size = seeker impact if built</div>
