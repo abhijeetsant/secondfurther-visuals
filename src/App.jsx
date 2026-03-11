@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // ── Cold Press palette — guide v1.0 ──────────────────────────────
 const C = {
@@ -1864,6 +1864,16 @@ const SmallMultiples = () => {
 // ══════════════════════════════════════════════════════════════════
 export default function App() {
   const [active, setActive] = useState(0);
+    useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab');
+    if (tabParam) {
+      const idx = allTabs.findIndex(t =>
+        t.label.toLowerCase().replace(/\s+/g, '-') === tabParam
+      );
+      if (idx >= 0) setActive(idx);
+    }
+  }, []);
   const [group, setGroup]   = useState(0);
 
   const groups = [
