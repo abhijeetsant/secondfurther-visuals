@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // ── Cold Press palette — guide v1.0 ──────────────────────────────
 const C = {
@@ -1170,142 +1170,119 @@ const PeelBack = () => (
 );
 
 
+
+
 // ══════════════════════════════════════════════════════════════════
-//  DECISION MATRIX — Bubble size = priority / impact score
+//  DECISION MATRIX — static, screenshot-ready
 // ══════════════════════════════════════════════════════════════════
 const DecisionMatrix = () => {
-  const [hov, setHov] = useState(null);
-  const W=520, H=420, cxA=W/2, cyA=H/2;
+  const W = 800, H = 520;
+  const PAD = { l:80, r:60, t:72, b:72 };
+  const iW = W - PAD.l - PAD.r;
+  const iH = H - PAD.t - PAD.b;
+  const sx = v => PAD.l + (v / 100) * iW;
+  const sy = v => PAD.t + iH - (v / 100) * iH;
+  const axX = sx(50), axY = sy(50);
+  const R = 12;
 
-  // UNIFORM bubble size — position alone tells the story
-  const R = 18;
-
-  // Existing: HIGH-Recruiter / LOW-Seeker quadrant — spread, no overlap
+  // Positions locked from final layout review
   const existing = [
-    { x:450,y:355, label:"Paid Placement",   sub:"Platform investment: Very High", la:"start" },
-    { x:320,y:358, label:"Easy Apply",        sub:"Platform investment: Very High", la:"end"   },
-    { x:453,y:268, label:"Premium Badge",     sub:"Platform investment: High",      la:"start" },
-    { x:298,y:262, label:"Applicant Count",   sub:"Platform investment: Medium",    la:"end"   },
-    { x:375,y:255, label:"Early Applicant",   sub:"Platform investment: Medium",    la:"middle"},
-    { x:278,y:355, label:"Social Graph",      sub:"Platform investment: Low",       la:"end"   },
+    { rx:95, ry:10,  label:"Paid Placement",  lx:sx(95),      ly:sy(10)+28,  anchor:"middle" },
+    { rx:89, ry:22,  label:"Easy Apply",       lx:sx(89)+26,   ly:sy(22)+4,   anchor:"start"  },
+    { rx:79, ry:10,  label:"Applicant Count",  lx:sx(79),      ly:sy(10)-22,  anchor:"middle" },
+    { rx:68, ry:10,  label:"Early Applicant",  lx:sx(68),      ly:sy(10)+28,  anchor:"middle" },
+    { rx:74, ry:28,  label:"Premium Badge",    lx:sx(74)+26,   ly:sy(28)-8,   anchor:"start"  },
+    { rx:59, ry:34,  label:"Social Graph",     lx:sx(59),      ly:sy(34)-22,  anchor:"middle" },
   ];
 
-  // Missing: SEEKER-BENEFIT quadrants — spread, no overlap
   const missing = [
-    { x:108,y: 95, label:"Response Rate",    sub:"Seeker impact: Very High — expose 8% avg"   },
-    { x:108,y:202, label:"Ghost Job Flag",   sub:"Seeker impact: Very High — 27% of listings" },
-    { x:218,y: 88, label:"ATS Visibility",   sub:"Seeker impact: High — hidden rejection"     },
-    { x:218,y:188, label:"Recruiter Active", sub:"Seeker impact: High — abandonment signal"   },
-    { x:148,y:318, label:"Budget Verified",  sub:"Seeker impact: Medium — intent signal"      },
-    { x:228,y:308, label:"Time-to-Hire",     sub:"Seeker impact: Medium — effort calibration" },
+    { rx:10, ry:95,  label:"Response Rate",    lx:sx(10)+26,  ly:sy(95)+4,   anchor:"start" },
+    { rx: 5, ry:88,  label:"Ghost Job Flag",   lx:sx(5)+26,   ly:sy(88)+4,   anchor:"start" },
+    { rx:13, ry:82,  label:"ATS Visibility",   lx:sx(13)+26,  ly:sy(82)+4,   anchor:"start" },
+    { rx:18, ry:76,  label:"Recruiter Active", lx:sx(18)+26,  ly:sy(76)+4,   anchor:"start" },
+    { rx:25, ry:70,  label:"Budget Verified",  lx:sx(25)+26,  ly:sy(70)+4,   anchor:"start" },
+    { rx:30, ry:64,  label:"Time-to-Hire",     lx:sx(30)+26,  ly:sy(64)+4,   anchor:"start" },
+  ];
+
+  const qLabels = [
+    { text:"Job Seeker Empowerment",    x:(PAD.l+axX)/2,    y:PAD.t-14,       anchor:"middle", color:`${C.dark}65`     },
+    { text:"Balanced Platform Value",   x:(axX+W-PAD.r)/2,  y:PAD.t-14,       anchor:"middle", color:"#5A8A6A90"        },
+    { text:"Low Platform Incentive",    x:(PAD.l+axX)/2,    y:H-PAD.b+26,     anchor:"middle", color:`${C.muted}90`    },
+    { text:"Recruiter Extraction Zone", x:(axX+W-PAD.r)/2,  y:H-PAD.b+26,     anchor:"middle", color:`${C.amberDim}90` },
   ];
 
   return (
-    <div style={{ background:C.bg, padding:"44px 48px 36px", fontFamily:"'Georgia',serif", width:900 }}>
+    <div style={{ background:C.bg, padding:"44px 48px 40px", fontFamily:"'Georgia',serif", width:920 }}>
       <div style={{ fontSize:10, fontWeight:700, letterSpacing:3, color:C.amber, marginBottom:8, textTransform:"uppercase", fontFamily:"sans-serif" }}>Product Teardown · LinkedIn Jobs</div>
       <div style={{ fontSize:26, fontWeight:800, color:C.dark, lineHeight:1.15 }}>Who the Product Was Designed For</div>
-      <div style={{ fontSize:13.5, color:C.grey, marginTop:6, marginBottom:28, fontStyle:"italic" }}>Position = where the platform chose to invest. The pattern is not subtle.</div>
-
-      <div style={{ display:"flex", gap:28 }}>
-        <svg width={W} height={H} style={{ flexShrink:0, overflow:"visible" }}>
-          {/* Quadrant fills — subtle, parchment-family only */}
-          <rect x={0}   y={0}   width={cxA} height={cyA} fill={`${C.dark}04`}/>
-          <rect x={cxA} y={0}   width={cxA} height={cyA} fill={`${C.amber}06`}/>
-          <rect x={0}   y={cyA} width={cxA} height={cyA} fill="transparent"/>
-          <rect x={cxA} y={cyA} width={cxA} height={cyA} fill={`${C.amber}08`}/>
-
-          {/* Axes */}
-          <line x1={cxA} y1={16} x2={cxA} y2={H-16} stroke={C.rule} strokeWidth={1.5}/>
-          <line x1={16} y1={cyA} x2={W-16} y2={cyA} stroke={C.rule} strokeWidth={1.5}/>
-          <polygon points={`${W-16},${cyA-5} ${W-4},${cyA} ${W-16},${cyA+5}`} fill={C.rule}/>
-          <polygon points={`${cxA-5},16 ${cxA},4 ${cxA+5},16`} fill={C.rule}/>
-
-          {/* Axis labels */}
-          <text x={W-20} y={cyA+16} fontSize={9} fill={C.muted} textAnchor="end" fontStyle="italic">High Recruiter Benefit →</text>
-          <text x={20}   y={cyA+16} fontSize={9} fill={C.muted} fontStyle="italic">← Low Recruiter Benefit</text>
-          <text x={cxA+6} y={20}   fontSize={9} fill={C.muted} fontStyle="italic">High Seeker Benefit ↑</text>
-          <text x={cxA+6} y={H-8}  fontSize={9} fill={C.muted} fontStyle="italic">Low Seeker Benefit ↓</text>
-
-          {/* Quadrant corner labels */}
-          <text x={cxA+10} y={38}  fontSize={9} fontWeight={700} fill="#6A8A7A">Optimal — both benefit</text>
-          <text x={22}     y={28}  fontSize={9} fontWeight={700} fill={C.dark}>Seeker-centric territory</text>
-          <text x={22}     y={40}  fontSize={8} fill={C.muted}>missing features live here</text>
-          <text x={cxA+10} y={H-20} fontSize={9} fontWeight={700} fill="#9A7040">LinkedIn's zone</text>
-          <text x={cxA+10} y={H-10} fontSize={8} fill={C.muted}>existing features cluster here</text>
-
-          {/* Missing features — dashed red, size = seeker impact */}
-          {missing.map((f,i) => {
-            const h=hov===`m${i}`;
-            const r = h ? R+3 : R;
-            const labelY = f.y + R + 14;
-            return(
-              <g key={i} onMouseEnter={()=>setHov(`m${i}`)} onMouseLeave={()=>setHov(null)} style={{cursor:"pointer"}}>
-                <circle cx={f.x} cy={f.y} r={h?r+4:r}
-                  fill={`${C.amber}44`} stroke={C.amberDim} strokeWidth={h?2:1.5} strokeDasharray="4,2"
-                  style={{transition:"all 0.18s"}}/>
-                <text x={f.x} y={f.y+4} textAnchor="middle" fontSize={9} fill={`${C.amberDim}88`} fontFamily="sans-serif">?</text>
-                <text x={f.x} y={labelY} textAnchor={f.la||"middle"} fontSize={9.5} fill={C.amberDim} fontFamily="sans-serif" fontWeight={h?700:400}>{f.label}</text>
-                {h&&(<g>
-                  <rect x={f.x-90} y={f.y-r-40} width={180} height={28} rx={5} fill={C.white} stroke={`${C.amberDim}30`} strokeWidth={1}/>
-                  <text x={f.x} y={f.y-r-23} textAnchor="middle" fontSize={10} fill={C.amberDim} fontFamily="sans-serif" fontStyle="italic">{f.sub}</text>
-                </g>)}
-              </g>
-            );
-          })}
-
-          {/* Existing features — solid blue, size = platform investment */}
-          {existing.map((f,i) => {
-            const h=hov===`e${i}`;
-            const r = h ? R+3 : R;
-            const labelX = f.la==="end" ? f.x - R - 8 : f.la==="start" ? f.x + R + 8 : f.x;
-            const anchor = f.la||"middle";
-            return(
-              <g key={i} onMouseEnter={()=>setHov(`e${i}`)} onMouseLeave={()=>setHov(null)} style={{cursor:"pointer"}}>
-                <circle cx={f.x} cy={f.y} r={h?r+4:r}
-                  fill={`${C.dark}CC`} stroke={C.dark} strokeWidth={h?2:1.5}
-                  style={{transition:"all 0.18s"}}/>
-                <text x={labelX} y={f.y + (f.la==="middle" ? r+14 : 4)}
-                  textAnchor={anchor} fontSize={9.5} fill={C.dark} fontFamily="sans-serif" fontWeight={h?700:400}>{f.label}</text>
-                {h&&(<g>
-                  <rect x={f.x-90} y={f.y-r-40} width={180} height={28} rx={5} fill={C.white} stroke={`${C.dark}30`} strokeWidth={1}/>
-                  <text x={f.x} y={f.y-r-23} textAnchor="middle" fontSize={10} fill={C.dark} fontFamily="sans-serif" fontStyle="italic">{f.sub}</text>
-                </g>)}
-              </g>
-            );
-          })}
-        </svg>
-
-        {/* Legend */}
-        <div style={{ paddingTop:24, flex:1 }}>
-          {/* Legend — uniform bubbles, no size key */}
-          {/* Type legend */}
-          <div style={{ marginBottom:22 }}>
-            <div style={{ display:"flex",alignItems:"center",gap:9,marginBottom:8 }}>
-              <svg width={20} height={20}><circle cx={10} cy={10} r={8} fill={`${C.dark}CC`} stroke={C.dark} strokeWidth={1.5}/></svg>
-              <div>
-                <div style={{fontSize:11.5,fontWeight:700,color:C.dark,fontFamily:"sans-serif"}}>Exists in LinkedIn</div>
-                <div style={{fontSize:9.5,color:C.grey,fontFamily:"sans-serif"}}>Size = platform investment</div>
-              </div>
-            </div>
-            <div style={{ display:"flex",alignItems:"center",gap:9 }}>
-              <svg width={20} height={20}><circle cx={10} cy={10} r={8} fill={`${C.amber}44`} stroke={C.amberDim} strokeWidth={1.5} strokeDasharray="3,2"/></svg>
-              <div>
-                <div style={{fontSize:11.5,fontWeight:700,color:C.amberDim,fontFamily:"sans-serif"}}>Doesn't exist</div>
-                <div style={{fontSize:9.5,color:C.grey,fontFamily:"sans-serif"}}>Size = seeker impact if built</div>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ padding:"14px",background:C.panel,borderRadius:7,borderLeft:`3px solid ${C.amber}`,fontSize:11,color:C.dark,lineHeight:1.65 }}>
-            The largest missing bubbles sit furthest from LinkedIn's existing zone. The highest-impact features for seekers were the ones never built.
-          </div>
+      <div style={{ fontSize:13.5, color:C.grey, marginTop:6, fontStyle:"italic" }}>Position = where the platform chose to invest. The gap between the clusters is the argument.</div>
+      <div style={{ margin:"18px 0 32px", padding:"13px 20px", borderLeft:`3px solid ${C.amber}`, background:C.panel, borderRadius:6 }}>
+        <div style={{ fontSize:12.5, color:C.dark, lineHeight:1.75, fontFamily:"sans-serif" }}>
+          The top-right quadrant is empty. A job seeker who gets hired quickly exits the platform. That is not what Talent Solutions optimises for. The broken feedback loop is not a missing feature — it is a revenue line that was never given a product name.
         </div>
       </div>
-      <div style={{ marginTop:18, fontSize:9.5, color:C.muted, fontStyle:"italic" }}>Source: LinkedIn Jobs UI audit, March 2025 · secondfurther.com</div>
+
+      <svg width={W} height={H} style={{ display:"block", overflow:"hidden" }}>
+
+        {/* Quadrant fills */}
+        <rect x={PAD.l} y={PAD.t} width={axX-PAD.l} height={axY-PAD.t} fill={`${C.dark}04`}/>
+        <rect x={axX}   y={PAD.t} width={W-PAD.r-axX} height={axY-PAD.t} fill={`${C.amber}04`}/>
+        <rect x={axX}   y={axY}   width={W-PAD.r-axX} height={H-PAD.b-axY} fill={`${C.amber}09`}/>
+
+        {/* Axes */}
+        <line x1={axX} y1={PAD.t} x2={axX} y2={H-PAD.b} stroke={C.rule} strokeWidth={1.5}/>
+        <line x1={PAD.l} y1={axY} x2={W-PAD.r} y2={axY} stroke={C.rule} strokeWidth={1.5}/>
+
+        {/* Arrowheads */}
+        <polygon points={`${axX-3},${PAD.t} ${axX},${PAD.t-12} ${axX+3},${PAD.t}`} fill={C.muted}/>
+        <polygon points={`${W-PAD.r},${axY-3} ${W-PAD.r+12},${axY} ${W-PAD.r},${axY+3}`} fill={C.muted}/>
+
+        {/* Axis direction labels */}
+        <text x={axX} y={PAD.t-16} fontSize={9} fill={C.muted} fontStyle="italic" textAnchor="middle">↑ Seeker Benefit</text>
+        <text x={W-PAD.r+16} y={axY+4} fontSize={9} fill={C.muted} fontStyle="italic" textAnchor="start">Recruiter Benefit →</text>
+
+        {/* Quadrant labels — outside data area in padding zones */}
+        {qLabels.map((q,i) => (
+          <text key={i} x={q.x} y={q.y} fontSize={10} fontWeight={700}
+            fill={q.color} textAnchor={q.anchor} fontFamily="sans-serif">{q.text}</text>
+        ))}
+
+        {/* Legend — top-right, inside Balanced Platform Value quadrant (intentionally empty) */}
+        <g transform={`translate(${W-PAD.r-168}, ${PAD.t+14})`}>
+          <rect x={0} y={0} width={162} height={56} rx={4} fill={C.panel} stroke={C.rule} strokeWidth={1}/>
+          <circle cx={18} cy={18} r={9} fill={`${C.dark}CC`} stroke={C.dark} strokeWidth={1.5}/>
+          <text x={32} y={22} fontSize={10} fill={C.dark} fontFamily="sans-serif">Built — exists today</text>
+          <circle cx={18} cy={40} r={9} fill={`${C.amber}30`} stroke={C.amberDim} strokeWidth={1.5} strokeDasharray="4,2"/>
+          <text x={32} y={44} fontSize={10} fill={C.amberDim} fontFamily="sans-serif">Not built — never shipped</text>
+        </g>
+
+        {/* Existing features — solid dark bubbles */}
+        {existing.map((f,i) => (
+          <g key={i}>
+            <circle cx={sx(f.rx)} cy={sy(f.ry)} r={R} fill={`${C.dark}CC`} stroke={C.dark} strokeWidth={1.5}/>
+            <text x={f.lx} y={f.ly} textAnchor={f.anchor} fontSize={10.5} fontWeight={500}
+              fill={C.dark} fontFamily="sans-serif">{f.label}</text>
+          </g>
+        ))}
+
+        {/* Missing features — amber dashed bubbles */}
+        {missing.map((f,i) => (
+          <g key={i}>
+            <circle cx={sx(f.rx)} cy={sy(f.ry)} r={R}
+              fill={`${C.amber}30`} stroke={C.amberDim} strokeWidth={1.5} strokeDasharray="5,3"/>
+            <text x={sx(f.rx)} y={sy(f.ry)+4} textAnchor="middle" fontSize={8}
+              fill={`${C.amberDim}99`} fontFamily="sans-serif">?</text>
+            <text x={f.lx} y={f.ly} textAnchor={f.anchor} fontSize={10.5} fontWeight={500}
+              fill={C.amberDim} fontFamily="sans-serif">{f.label}</text>
+          </g>
+        ))}
+
+      </svg>
+
+      <div style={{ marginTop:16, fontSize:9.5, color:C.muted, fontStyle:"italic" }}>Source: LinkedIn Jobs UI audit, March 2025 · secondfurther.com</div>
     </div>
   );
 };
-
 
 // ══════════════════════════════════════════════════════════════════
 //  TRANSPARENCY SPECTRUM
@@ -1863,38 +1840,59 @@ const SmallMultiples = () => {
 //  MAIN — two-level nav
 // ══════════════════════════════════════════════════════════════════
 export default function App() {
-  const [active, setActive] = useState(0);
-  const [group, setGroup]   = useState(0);
-
   const groups = [
     { label: "Primary Research", tabs: [
-      { label: "Kay's Receipt",    sub: "Brand Palette",        view: <KayReceipt /> },
+      { label: "Kay's Receipt",    sub: "Brand Palette",        slug: "kays-receipt",     view: <KayReceipt /> },
     ]},
     { label: "Data Charts", tabs: [
-      { label: "Efficiency Decay", sub: "Bubble",               view: <BubbleChart /> },
-      { label: "Flood & Drain",    sub: "Funnel",               view: <RecruiterFunnel /> },
+      { label: "Efficiency Decay", sub: "Bubble",               slug: "efficiency-decay", view: <BubbleChart /> },
+      { label: "Flood & Drain",    sub: "Funnel",               slug: "flood-drain",      view: <RecruiterFunnel /> },
     ]},
     { label: "Ad Surface", tabs: [
-      { label: "Split-Screen",     sub: "Ideal vs Reality",     view: <SplitScreen /> },
-      { label: "Peel-Back",        sub: "3-Layer Reveal",       view: <PeelBack /> },
-      { label: "Decision Matrix",  sub: "Priority Bubbles",     view: <DecisionMatrix /> },
-      { label: "Transparency",     sub: "Spectrum",             view: <TransparencySpectrum /> },
+      { label: "Split-Screen",     sub: "Ideal vs Reality",     slug: "split-screen",     view: <SplitScreen /> },
+      { label: "Peel-Back",        sub: "3-Layer Reveal",       slug: "peel-back",        view: <PeelBack /> },
+      { label: "Decision Matrix",  sub: "Priority Bubbles",     slug: "decision-matrix",  view: <DecisionMatrix /> },
+      { label: "Transparency",     sub: "Spectrum",             slug: "transparency",     view: <TransparencySpectrum /> },
     ]},
     { label: "Signal Layer", tabs: [
-      { label: "Signal Layer",     sub: "Shown vs Hidden",      view: <SignalLayer /> },
-      { label: "Scorecard",        sub: "Progress Bars",        view: <Scorecard /> },
-      { label: "Spider Chart",     sub: "Radar / New option",   view: <SpiderChart /> },
-      { label: "Network Graph",    sub: "Architecture",         view: <NetworkGraph /> },
+      { label: "Signal Layer",     sub: "Shown vs Hidden",      slug: "signal-layer",     view: <SignalLayer /> },
+      { label: "Scorecard",        sub: "Progress Bars",        slug: "scorecard",        view: <Scorecard /> },
+      { label: "Spider Chart",     sub: "Radar / New option",   slug: "spider-chart",     view: <SpiderChart /> },
+      { label: "Network Graph",    sub: "Architecture",         slug: "network-graph",    view: <NetworkGraph /> },
     ]},
     { label: "Kay's Collapse", tabs: [
-      { label: "Waterfall",        sub: "The 141 Drop",         view: <WaterfallChart /> },
-      { label: "Sankey",           sub: "Where They Went",      view: <SankeyDiagram /> },
-      { label: "Small Multiples",  sub: "3 Cohorts",            view: <SmallMultiples /> },
+      { label: "Waterfall",        sub: "The 141 Drop",         slug: "waterfall",        view: <WaterfallChart /> },
+      { label: "Sankey",           sub: "Where They Went",      slug: "sankey",           view: <SankeyDiagram /> },
+      { label: "Small Multiples",  sub: "3 Cohorts",            slug: "small-multiples",  view: <SmallMultiples /> },
     ]},
   ];
 
   const gStart = groups.reduce((acc, g, i) => { acc[i] = i === 0 ? 0 : acc[i-1] + groups[i-1].tabs.length; return acc; }, {});
   const allTabs = groups.flatMap(g => g.tabs);
+  const slugToIndex = Object.fromEntries(allTabs.map((t, i) => [t.slug, i]));
+
+  // Read initial tab from URL param
+  const getInitialTab = () => {
+    const params = new URLSearchParams(window.location.search);
+    const slug = params.get("tab");
+    return slug && slugToIndex[slug] !== undefined ? slugToIndex[slug] : 0;
+  };
+
+  const [active, setActive] = useState(getInitialTab);
+  const [group, setGroup]   = useState(() => {
+    const idx = getInitialTab();
+    return groups.findIndex((g, i) => idx >= gStart[i] && idx < gStart[i] + g.tabs.length);
+  });
+
+  // Sync URL when tab changes
+  useEffect(() => {
+    const slug = allTabs[active]?.slug;
+    if (slug) {
+      const url = new URL(window.location.href);
+      url.searchParams.set("tab", slug);
+      window.history.replaceState(null, "", url.toString());
+    }
+  }, [active]);
 
   return (
     <div style={{ background: "#E8E0DC", minHeight: "100vh", padding: "28px 24px", fontFamily: "sans-serif" }}>
