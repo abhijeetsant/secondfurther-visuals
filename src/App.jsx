@@ -154,7 +154,7 @@ const KayReceipt = () => {
           <HR style="dashed" />
 
           {/* Section — Activity */}
-          <Item category="Activity" label="Applications sent" value="141" note="Over 6 months" />
+          <Item category="Activity" label="Applications sent" value="141" note="In February 2026 alone" />
           <Item label="Responses received"   value="33"  note="23% of applications" />
           <Item label="First-round interviews" value="02" note="6% of responses"    />
 
@@ -1340,13 +1340,13 @@ const WaterfallChart = () => {
 
   // Each step: label, delta, mechanism (shown on hover), color role
   const steps = [
-    { label: "Applications\nSent",        val: 141,  delta: +141, from: 0,   mechanism: "141 applications across 6 months of active job seeking",      role: "start"   },
+    { label: "Applications\nSent",        val: 141,  delta: +141, from: 0,   mechanism: "141 applications in a single month — February 2026",      role: "start"   },
     { label: "Ghost\nListings",           val: 103,  delta:  -38, from: 141, mechanism: "27% of listings estimated with no active hire intent",          role: "loss"    },
     { label: "ATS\nBlack Hole",           val:  46,  delta:  -57, from: 103, mechanism: "No screening by a human — auto-filtered or never reviewed",     role: "loss"    },
     { label: "Recruiter\nTimeout",        val:  33,  delta:  -13, from:  46, mechanism: "Response probability collapses after 48 hours. Window missed.", role: "loss"    },
     { label: "No Interview\nOffered",     val:   2,  delta:  -31, from:  33, mechanism: "33 responses received. 31 ended without an interview offer",     role: "loss"    },
     { label: "No Offer\nExtended",        val:   0,  delta:  -2,  from:   2, mechanism: "2 first-round interviews. 0 offers.",                           role: "loss"    },
-    { label: "Outcome",                   val:   0,  delta:   0,  from:   0, mechanism: "6 months. $240 in Premium fees. 141 applications. 0 offers.",   role: "end"     },
+    { label: "Outcome",                   val:   0,  delta:   0,  from:   0, mechanism: "6 months searching. $240 in Premium. 141 apps in February alone. 0 offers.",   role: "end"     },
   ];
 
   const barW = Math.floor(iW / steps.length) - 14;
@@ -1677,7 +1677,7 @@ const SankeyDiagram = () => {
       </svg>
 
       <div style={{ marginTop: 12, padding: "13px 20px", background: C.panel, borderRadius: 7, fontSize: 12.5, color: C.dark, lineHeight: 1.6, borderLeft: `3px solid ${C.amber}` }}>
-        Two of 141 applications resulted in an interview. The 139 that didn't each have a named mechanism. The platform is not a search engine — it is a sorting system with different goals than yours.
+        141 applications in a single month. Two interviews. Zero offers. The platform is not a search engine — it is a sorting system with different goals than yours.
       </div>
       <div style={{ marginTop: 14, fontSize: 9.5, color: C.muted, fontStyle: "italic" }}>Sources: Primary research (Kay, 2025) · Resume Builder 2024 · LinkedIn dataset · secondfurther.com</div>
     </div>
@@ -1723,13 +1723,13 @@ const SmallMultiples = () => {
     {
       id: "premium",
       title: "LinkedIn Premium\nSubscriber",
-      sub: "Kay's cohort · $40/mo · 6 months",
+      sub: "Kay's cohort · $240 · 6 months Premium",
       badge: "$240 spent",
       badgeColor: C.amber,
       metrics: [
         { label: "Response Rate",  val: 23,  note: "33 of 141 — same as targeted"      },
         { label: "Interview Rate", val: 1.4, note: "2 of 141 — closer to mass-apply"   },
-        { label: "Offer Rate",     val: 0,   note: "0 offers after 6 months"           },
+        { label: "Offer Rate",     val: 0,   note: "0 offers — 141 apps in Feb 2026 alone"           },
       ],
       bg: "#FDF6EE",
       border: C.amber,
